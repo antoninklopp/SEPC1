@@ -36,7 +36,7 @@ int question6_executer(char *line)
 
 	/* Remove this line when using parsecmd as it will free it */
 	free(line);
-	
+
 	return 0;
 }
 
@@ -103,12 +103,12 @@ int main() {
 
 		/* If input stream closed, normal termination */
 		if (!l) {
-		  
+
 			terminate(0);
 		}
-		
 
-		
+
+
 		if (l->err) {
 			/* Syntax error, read another command */
 			printf("error: %s\n", l->err);
@@ -127,6 +127,17 @@ int main() {
                                 printf("'%s' ", cmd[j]);
                         }
 			printf("\n");
+		}
+
+		/* Execution des commandes */
+		for (i=0; l->seq[i]!=0; i++) {
+			char **cmd = l->seq[i];
+			char *executeCmd = cmd[0];
+			for (j=1; cmd[j]!=0; j++) {
+				strcat(executeCmd, " ");
+				strcat(executeCmd, cmd[j]);
+			}
+			system(executeCmd);
 		}
 	}
 
