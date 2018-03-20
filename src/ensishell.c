@@ -10,6 +10,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 
 #include "variante.h"
@@ -90,11 +93,23 @@ void runcmd(char **cmd, int background, char* input, char* output){
 			}
 
 			for (int j = 0; allJobs[i].name[j] != 0; j++){
-				printf("%s \n", allJobs[i].name[j]);
+				printf("%s ", allJobs[i].name[j]);
 			}
 		}
 	} else {
 		pid_t f = fork();
+		int inputFile = -1;
+		int outputFile = -1;
+		// Gestion des entrees sorties
+		if (output){
+			// Si un fichier sortie est proposé.
+			outPutFile = open(output, O_CREAT);
+		}
+		if (input){
+			// Si un fichier d'entrée est proposé
+			inputFile = open(input); 
+		}
+
 		if (f == -1){
 			fprintf(stderr, "Erreur dans le fork");
 			exit(1);
@@ -124,7 +139,7 @@ void runcmd(char **cmd, int background, char* input, char* output){
 				}
 				allJobs[currentProcess].status = 1;
 			}
-			}
+		}
 	}
 }
 
