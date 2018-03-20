@@ -96,6 +96,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeIO[2]
 			for (int j = 0; allJobs[i].name[j] != 0; j++){
 				printf("%s ", allJobs[i].name[j]);
 			}
+			printf("\n");
 		}
 	} else {
 		pid_t f = fork();
@@ -107,12 +108,12 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeIO[2]
 			int inputFile = -1;
 			int outputFile = -1;
 			// Gestion des entrees sorties
-			if (outputFile != -1){
+			if (output){
 				// Si un fichier sortie est proposé.
 				outputFile = open(output, O_CREAT|O_WRONLY, 0777);
-				dup2(outputFile, 1);
+				dup2(outputFile, STDOUT_FILENO);
 			}
-			if (inputFile != -1){
+			if (inputFile){
 				// Si un fichier d'entrée est proposé
 				inputFile = open(input, O_RDONLY);
 				// Redirection vers l'entrée.
@@ -120,10 +121,14 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeIO[2]
 			}
 
 			// Si le pipe est different de -1
-			if (numPipe == 0){
-			// 	dup2(pipeIO[0], 1);
-			} else if (numPipe == 1){
-			// 	dup2(pipeIO[1], STDIN_FILENO);
+			if (numPipe != -1){
+				if (numPipe == 0){
+			    	dup2(pipeIO[0], 0);
+			    	close(pipeIO[1]);
+				} else {
+			      	dup2(pipeIO[1], 1);
+			      	close(pipeIO[0]);
+				}
 			}
 
 			execvp(cmdExec, cmd);
@@ -151,6 +156,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeIO[2]
 				allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = 0};
 				nombreJobs ++;
 			}
+
 			if (background == 0){
 				int currentProcess = nombreJobs - 1;
 				// On attend que le job soit fini pour mettre son status à 1.
@@ -256,6 +262,14 @@ int main() {
 			char **cmd = l->seq[i];
 			runcmd(cmd, background, l->in, l->out, pipeInOut, (tailleCommandes == 1) ? -1 : i);
 		}
+
+		if (tailleCommandes != 1){
+			dup2(1, pipeInOut[0]);
+		}
+
+		// On close le pipe
+		close(pipeInOut[0]);
+		close(pipeInOut[1]);
 	}
 	return EXIT_SUCCESS;
 }
