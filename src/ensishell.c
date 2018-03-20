@@ -28,6 +28,15 @@
 #if USE_GUILE == 1
 #include <libguile.h>
 
+// struct de jobs
+struct JOB {
+	char* name;
+	pid_t pid;
+	int status;
+};
+
+static int nombreJobs = 0;
+
 int question6_executer(char *line)
 {
 	/* Question 6: Insert your code to execute the command line
@@ -64,22 +73,52 @@ void terminate(char *line) {
 /*
 Appel d'une commande
 */
-int runcmd(char **cmd){
+void runcmd(char **cmd, int background, struct JOB* allJobs){
 	char *cmdExec = cmd[0];
-	int pid_status;
+	char *job = "jobs";
+	int child_status;
 	pid_t f = fork();
 
-	if (f == 0){ // Nouveau processus
+	if (strcmp(cmdExec, job) == 0){
+		if (f == 0){
+			fprintf(stderr, "jobs\n");
+			// Appel de la commande jobs.
+			for (int i = 0; i < nombreJobs; i++) {
+				printf("Process numero : %i\n", i);
+				// for (int j = 0; allJobs[i].name[j] != 0; j++){
+				// 	printf("%s ", allJobs[i].name[j]);
+				// }
+				printf("%s ", allJobs[i].name);
+				if (waitpid(allJobs[i].pid, &allJobs[i].status, 0) == allJobs[i].pid){
+					printf("\n Processus terminé \n\n");
+				} else {
+					printf("\n Processus non terminé \n\n");
+				}
+			}
+			exit(0);
+		} else {
+			wait(&child_status);
+		}
+	}
+
+	if (f == -1){
+		fprintf(stderr, "Erreur dans le fork");
+		exit(1);
+	} else if (f == 0){ // Nouveau processus
 		execvp(cmdExec, cmd);
 		exit(0);
-	}
-	else { // Processus parent attend la fin du premier processus.
-		pid_t tpid = wait(&pid_status);
-		while (tpid != f){
-			break;
-			// tpid = wait(&pid_status);
+	} else { // Processus parent attend la fin du premier processus.*
+		fprintf(stderr, "Ajout d'un job %i\n", nombreJobs);
+		if (nombreJobs < 15){
+			fprintf(stderr, "ici\n");
+			nombreJobs ++;
+			char * copyParam = malloc(sizeof(char*));
+			memcpy(copyParam, cmd[0], 20);
+			allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = child_status};
 		}
-		return pid_status;
+		if (background == 0){
+			wait(&child_status);
+		}
 	}
 }
 
@@ -92,6 +131,8 @@ int main() {
         /* register "executer" function in scheme */
         scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
+
+	struct JOB *allJobs = malloc(16 * sizeof(struct JOB));
 
 	while (1) {
 		struct cmdline *l;
@@ -142,7 +183,13 @@ int main() {
 
 		if (l->in) printf("in: %s\n", l->in);
 		if (l->out) printf("out: %s\n", l->out);
-		if (l->bg) printf("background (&)\n");
+
+
+		int background = 0;
+		if (l->bg){
+			background = 1;
+			printf("background (&)\n");
+		}
 
 		/* Display each command of the pipe */
 		for (i=0; l->seq[i]!=0; i++) {
@@ -157,7 +204,7 @@ int main() {
 		/* Execution des commandes */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
-			runcmd(cmd);
+			runcmd(cmd, background, allJobs);
 		}
 	}
 }
