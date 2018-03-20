@@ -30,12 +30,13 @@
 
 // struct de jobs
 struct JOB {
-	char* name;
+	char** name;
 	pid_t pid;
 	int status;
 };
 
 static int nombreJobs = 0;
+static struct JOB* allJobs;
 
 int question6_executer(char *line)
 {
@@ -73,10 +74,11 @@ void terminate(char *line) {
 /*
 Appel d'une commande
 */
-void runcmd(char **cmd, int background, struct JOB* allJobs){
+void runcmd(char **cmd, int background){
 	char *cmdExec = cmd[0];
 	char *job = "jobs";
 	int child_status;
+
 	pid_t f = fork();
 
 	if (strcmp(cmdExec, job) == 0){
@@ -85,10 +87,10 @@ void runcmd(char **cmd, int background, struct JOB* allJobs){
 			// Appel de la commande jobs.
 			for (int i = 0; i < nombreJobs; i++) {
 				printf("Process numero : %i\n", i);
-				// for (int j = 0; allJobs[i].name[j] != 0; j++){
-				// 	printf("%s ", allJobs[i].name[j]);
-				// }
-				printf("%s ", allJobs[i].name);
+				for (int j = 0; allJobs[i].name[j] != 0; j++){
+					printf("%s \n", allJobs[i].name[j]);
+				}
+				printf("etat process %i %i", allJobs[i].pid, waitpid(allJobs[i].pid, &child_status, 0));
 				if (waitpid(allJobs[i].pid, &allJobs[i].status, 0) == allJobs[i].pid){
 					printf("\n Processus terminé \n\n");
 				} else {
@@ -99,25 +101,33 @@ void runcmd(char **cmd, int background, struct JOB* allJobs){
 		} else {
 			wait(&child_status);
 		}
-	}
-
-	if (f == -1){
-		fprintf(stderr, "Erreur dans le fork");
-		exit(1);
-	} else if (f == 0){ // Nouveau processus
-		execvp(cmdExec, cmd);
-		exit(0);
-	} else { // Processus parent attend la fin du premier processus.*
-		fprintf(stderr, "Ajout d'un job %i\n", nombreJobs);
-		if (nombreJobs < 15){
-			fprintf(stderr, "ici\n");
-			nombreJobs ++;
-			char * copyParam = malloc(sizeof(char*));
-			memcpy(copyParam, cmd[0], 20);
-			allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = child_status};
-		}
-		if (background == 0){
-			wait(&child_status);
+	} else {
+		if (f == -1){
+			fprintf(stderr, "Erreur dans le fork");
+			exit(1);
+		} else if (f == 0){ // Nouveau processus
+			execvp(cmdExec, cmd);
+			exit(0);
+		} else { // Processus parent attend la fin du premier processus.*
+			fprintf(stderr, "Ajout d'un job %i\n", f);
+			if (nombreJobs < 15){
+				fprintf(stderr, "ici\n");
+				int lengthCmd = 0;
+				while(cmd[lengthCmd] != NULL){
+					lengthCmd++;
+				}
+				printf("%i\n", lengthCmd);
+				char **copyParam = malloc(lengthCmd*sizeof(char*) + 1);
+				for (int i=0; i < lengthCmd; i++){
+					copyParam[i] = malloc(sizeof(cmd[i]) + 1);
+					memcpy(copyParam[i], cmd[i], sizeof(cmd[i])/sizeof(char) + 1);
+				}
+				allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = child_status};
+				nombreJobs ++;
+			}
+			if (background == 0){
+				wait(&child_status);
+			}
 		}
 	}
 }
@@ -132,7 +142,7 @@ int main() {
         scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
 
-	struct JOB *allJobs = malloc(16 * sizeof(struct JOB));
+	allJobs = malloc(16 * sizeof(struct JOB));
 
 	while (1) {
 		struct cmdline *l;
@@ -204,7 +214,7 @@ int main() {
 		/* Execution des commandes */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
-			runcmd(cmd, background, allJobs);
+			runcmd(cmd, background);
 		}
 	}
 }
