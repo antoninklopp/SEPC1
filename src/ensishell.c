@@ -76,8 +76,10 @@ void terminate(char *line) {
 
 /*
 Appel d'une commande
+
+@numPipe: 0 ou 1 selon que la commmanbde soit appelée en premier ou en 2
 */
-void runcmd(char **cmd, int background, char* input, char* output){
+void runcmd(char **cmd, int background, char* input, char* output, int pipeIO[2], int numPipe){
 	char *cmdExec = cmd[0];
 	char *job = "jobs";
 	int child_status;
@@ -91,30 +93,49 @@ void runcmd(char **cmd, int background, char* input, char* output){
 			} else {
 				printf("[Processing]         ");
 			}
-
 			for (int j = 0; allJobs[i].name[j] != 0; j++){
 				printf("%s ", allJobs[i].name[j]);
 			}
 		}
 	} else {
 		pid_t f = fork();
-		int inputFile = -1;
-		int outputFile = -1;
-		// Gestion des entrees sorties
-		if (output){
-			// Si un fichier sortie est proposé.
-			outPutFile = open(output, O_CREAT);
-		}
-		if (input){
-			// Si un fichier d'entrée est proposé
-			inputFile = open(input); 
-		}
 
 		if (f == -1){
 			fprintf(stderr, "Erreur dans le fork");
 			exit(1);
 		} else if (f == 0){ // Nouveau processus
+			int inputFile = -1;
+			int outputFile = -1;
+			// Gestion des entrees sorties
+			if (outputFile != -1){
+				// Si un fichier sortie est proposé.
+				outputFile = open(output, O_CREAT|O_WRONLY, 0777);
+				dup2(outputFile, 1);
+			}
+			if (inputFile != -1){
+				// Si un fichier d'entrée est proposé
+				inputFile = open(input, O_RDONLY);
+				// Redirection vers l'entrée.
+				dup2(inputFile, STDIN_FILENO);
+			}
+
+			// Si le pipe est different de -1
+			if (numPipe == 0){
+			// 	dup2(pipeIO[0], 1);
+			} else if (numPipe == 1){
+			// 	dup2(pipeIO[1], STDIN_FILENO);
+			}
+
 			execvp(cmdExec, cmd);
+
+			// On ferme les fichiers
+			if (inputFile != -1){
+				close(inputFile);
+			}
+			if (outputFile != -1){
+				close(outputFile);
+			}
+
 			exit(0);
 		} else { // Processus parent attend la fin du premier processus.*
 			if (nombreJobs < 15){
@@ -212,6 +233,7 @@ int main() {
 			printf("background (&)\n");
 		}
 
+		int tailleCommandes = 0;
 		/* Display each command of the pipe */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
@@ -219,13 +241,21 @@ int main() {
             for (j=0; cmd[j]!=0; j++) {
                 printf("'%s' ", cmd[j]);
             }
+			tailleCommandes ++;
 			printf("\n");
+		}
+
+		int pipeInOut[2];
+		if (pipe(pipeInOut) != 0){
+			fprintf(stderr, "Erreur de création du tube.\n");
+			return EXIT_FAILURE;
 		}
 
 		/* Execution des commandes */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
-			runcmd(cmd, background, l->in, l->out);
+			runcmd(cmd, background, l->in, l->out, pipeInOut, (tailleCommandes == 1) ? -1 : i);
 		}
 	}
+	return EXIT_SUCCESS;
 }
