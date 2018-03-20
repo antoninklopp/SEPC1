@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 
 #include "variante.h"
 #include "readcmd.h"
@@ -56,6 +59,28 @@ void terminate(char *line) {
 	  free(line);
 	printf("exit\n");
 	exit(0);
+}
+
+/*
+Appel d'une commande
+*/
+int runcmd(char **cmd){
+	char *cmdExec = cmd[0];
+	int pid_status;
+	pid_t f = fork();
+
+	if (f == 0){ // Nouveau processus
+		execvp(cmdExec, cmd);
+		exit(0);
+	}
+	else { // Processus parent attend la fin du premier processus.
+		pid_t tpid = wait(&pid_status);
+		while (tpid != f){
+			break;
+			// tpid = wait(&pid_status);
+		}
+		return pid_status;
+	}
 }
 
 
@@ -123,22 +148,16 @@ int main() {
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
 			printf("seq[%d]: ", i);
-                        for (j=0; cmd[j]!=0; j++) {
-                                printf("'%s' ", cmd[j]);
-                        }
+            for (j=0; cmd[j]!=0; j++) {
+                    printf("'%s' ", cmd[j]);
+            }
 			printf("\n");
 		}
 
 		/* Execution des commandes */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
-			char *executeCmd = cmd[0];
-			for (j=1; cmd[j]!=0; j++) {
-				strcat(executeCmd, " ");
-				strcat(executeCmd, cmd[j]);
-			}
-			system(executeCmd);
+			runcmd(cmd);
 		}
 	}
-
 }
