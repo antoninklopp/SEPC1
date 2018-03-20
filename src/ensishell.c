@@ -74,7 +74,7 @@ void terminate(char *line) {
 /*
 Appel d'une commande
 */
-void runcmd(char **cmd, int background){
+void runcmd(char **cmd, int background, char* input, char* output){
 	char *cmdExec = cmd[0];
 	char *job = "jobs";
 	int child_status;
@@ -202,7 +202,7 @@ int main() {
 			char **cmd = l->seq[i];
 			printf("seq[%d]: ", i);
             for (j=0; cmd[j]!=0; j++) {
-                    printf("'%s' ", cmd[j]);
+                printf("'%s' ", cmd[j]);
             }
 			printf("\n");
 		}
@@ -210,7 +210,7 @@ int main() {
 		/* Execution des commandes */
 		for (i=0; l->seq[i]!=0; i++) {
 			char **cmd = l->seq[i];
-			runcmd(cmd, background);
+			runcmd(cmd, background, l->in, l->out);
 		}
 	}
 }

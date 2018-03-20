@@ -1,7 +1,7 @@
 ensimag-shell
 =============
 
-Squelette pour le TP shell
+TP SEPC Noe Antonin
 
 Tous les fichiers sont sous licence GPLv3+
 
