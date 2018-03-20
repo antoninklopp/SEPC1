@@ -79,29 +79,22 @@ void runcmd(char **cmd, int background){
 	char *job = "jobs";
 	int child_status;
 
-	pid_t f = fork();
-
 	if (strcmp(cmdExec, job) == 0){
-		if (f == 0){
-			fprintf(stderr, "jobs\n");
-			// Appel de la commande jobs.
-			for (int i = 0; i < nombreJobs; i++) {
-				printf("Process numero : %i\n", i);
-				for (int j = 0; allJobs[i].name[j] != 0; j++){
-					printf("%s \n", allJobs[i].name[j]);
-				}
-				printf("etat process %i %i", allJobs[i].pid, waitpid(allJobs[i].pid, &child_status, 0));
-				if (waitpid(allJobs[i].pid, &allJobs[i].status, 0) == allJobs[i].pid){
-					printf("\n Processus terminé \n\n");
-				} else {
-					printf("\n Processus non terminé \n\n");
-				}
+		// Appel de la commande jobs.
+		for (int i = 0; i < nombreJobs; i++) {
+			printf("[%i]        ", i+1);
+			if (allJobs[i].status == 1){
+				printf("[Stopped]       ");
+			} else {
+				printf("[Processing]         ");
 			}
-			exit(0);
-		} else {
-			wait(&child_status);
+
+			for (int j = 0; allJobs[i].name[j] != 0; j++){
+				printf("%s \n", allJobs[i].name[j]);
+			}
 		}
 	} else {
+		pid_t f = fork();
 		if (f == -1){
 			fprintf(stderr, "Erreur dans le fork");
 			exit(1);
@@ -109,26 +102,29 @@ void runcmd(char **cmd, int background){
 			execvp(cmdExec, cmd);
 			exit(0);
 		} else { // Processus parent attend la fin du premier processus.*
-			fprintf(stderr, "Ajout d'un job %i\n", f);
 			if (nombreJobs < 15){
-				fprintf(stderr, "ici\n");
 				int lengthCmd = 0;
 				while(cmd[lengthCmd] != NULL){
 					lengthCmd++;
 				}
-				printf("%i\n", lengthCmd);
 				char **copyParam = malloc(lengthCmd*sizeof(char*) + 1);
 				for (int i=0; i < lengthCmd; i++){
 					copyParam[i] = malloc(sizeof(cmd[i]) + 1);
 					memcpy(copyParam[i], cmd[i], sizeof(cmd[i])/sizeof(char) + 1);
 				}
-				allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = child_status};
+				allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = 0};
 				nombreJobs ++;
 			}
 			if (background == 0){
-				wait(&child_status);
+				int currentProcess = nombreJobs - 1;
+				// On attend que le job soit fini pour mettre son status à 1.
+				waitpid(allJobs[nombreJobs-1].pid, &child_status, 0);
+				while (!WIFEXITED(child_status) && !WIFSIGNALED(child_status)){
+					waitpid(allJobs[nombreJobs-1].pid, &child_status, 0);
+				}
+				allJobs[currentProcess].status = 1;
 			}
-		}
+			}
 	}
 }
 
