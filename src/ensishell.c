@@ -79,7 +79,7 @@ Appel d'une commande
 
 @numPipe: 0 ou 1 selon que la commmanbde soit appelée en premier ou en 2
 */
-void runcmd(char **cmd, int background, char* input, char* output, int pipeIO[2], int numPipe){
+void runcmd(char **cmd, int background, char* input, char* output, int pipeOutput[2], int pipeInput[2]){
 	char *cmdExec = cmd[0];
 	char *job = "jobs";
 	int child_status;
@@ -119,11 +119,12 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeIO[2]
 				dup2(inputFile, STDIN_FILENO);
 			}
 
-			// Si le pipe est different de -1
-			if (numPipe == 0){
-			// 	dup2(pipeIO[0], 1);
-			} else if (numPipe == 1){
-			// 	dup2(pipeIO[1], STDIN_FILENO);
+
+			if (pipeOutput[0] != -1){
+			 	dup2(pipeOutput[1], STDOUT_FILENO);
+			}
+			if (pipeInput[1] != -1){
+			 	dup2(pipeInput[0], STDIN_FILENO);
 			}
 
 			execvp(cmdExec, cmd);
@@ -245,16 +246,34 @@ int main() {
 			printf("\n");
 		}
 
-		int pipeInOut[2];
-		if (pipe(pipeInOut) != 0){
-			fprintf(stderr, "Erreur de création du tube.\n");
-			return EXIT_FAILURE;
-		}
+		int pipeInput[2] = {-1, -1};
+		int pipeOutput[2] = {-1, -1};
 
+		int nbInstructions = 0;
 		/* Execution des commandes */
 		for (i=0; l->seq[i]!=0; i++) {
+			nbInstructions++;
+		}
+
+		for (i=0; i < nbInstructions; i++){
+			pipeInput[0] = pipeOutput[0];
+			pipeInput[1] = pipeOutput[1];
+			if(i != nbInstructions-1){
+				if(pipe(pipeOutput) != 0){
+					fprintf(stderr, "Erreur dans la creation du pipe à l'étape %i\n", i);
+					exit(1);
+				}
+			}
+			else{
+				pipeOutput[0] = -1;
+				pipeOutput[1] = -1;
+			}
 			char **cmd = l->seq[i];
-			runcmd(cmd, background, l->in, l->out, pipeInOut, (tailleCommandes == 1) ? -1 : i);
+			runcmd(cmd, background, l->in, l->out, pipeOutput, pipeInput);
+			//there seems to be no issue closing non existing pipes
+			// so the next 2 line work regardless of pipe initialization
+			close(pipeOutput[1]);
+			close(pipeInput[0]);
 		}
 	}
 	return EXIT_SUCCESS;
