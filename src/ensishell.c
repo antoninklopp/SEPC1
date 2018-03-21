@@ -96,6 +96,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 			for (int j = 0; allJobs[i].name[j] != 0; j++){
 				printf("%s ", allJobs[i].name[j]);
 			}
+			printf("\n");
 		}
 	} else {
 		pid_t f = fork();
@@ -107,12 +108,12 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 			int inputFile = -1;
 			int outputFile = -1;
 			// Gestion des entrees sorties
-			if (outputFile != -1){
+			if (output){
 				// Si un fichier sortie est proposé.
 				outputFile = open(output, O_CREAT|O_WRONLY, 0777);
-				dup2(outputFile, 1);
+				dup2(outputFile, STDOUT_FILENO);
 			}
-			if (inputFile != -1){
+			if (inputFile){
 				// Si un fichier d'entrée est proposé
 				inputFile = open(input, O_RDONLY);
 				// Redirection vers l'entrée.
@@ -152,6 +153,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 				allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = 0};
 				nombreJobs ++;
 			}
+
 			if (background == 0){
 				int currentProcess = nombreJobs - 1;
 				// On attend que le job soit fini pour mettre son status à 1.
@@ -275,6 +277,14 @@ int main() {
 			close(pipeOutput[1]);
 			close(pipeInput[0]);
 		}
+
+		if (tailleCommandes != 1){
+			dup2(1, pipeInOut[0]);
+		}
+
+		// On close le pipe
+		close(pipeInOut[0]);
+		close(pipeInOut[1]);
 	}
 	return EXIT_SUCCESS;
 }
