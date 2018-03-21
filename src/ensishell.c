@@ -91,6 +91,10 @@ void freeJobs(){
 	}
 }
 
+void signalHandler(int signal){
+	done = 1;
+}
+
 /*
 Appel d'une commande
 
@@ -176,6 +180,21 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					currentJob = nouveauJob;
 				}
 				nombreJobs ++;
+
+				// Declaration des variables de temps.
+				struct timeval temps_avant, temps_apres;
+
+			    gettimeofday (&temps_avant, NULL);
+
+				// Ajout du point 7.3.
+				pid_t state = waitpid(tmpJob->pid, &child_status, WNOHANG);
+				struct sigaction prepaSignal;
+
+				prepaSignal.sa_handler = signalHandler;
+				sigaction(SIGTERM, &prepaSignal, NULL); 
+
+			    gettimeofday (&temps_apres, NULL);
+
 			}
 		}
 	}
