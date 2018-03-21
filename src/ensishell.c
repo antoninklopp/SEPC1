@@ -42,27 +42,6 @@ static int nombreJobs = 0;
 static struct JOB* firstJob = NULL;
 static struct JOB* currentJob = NULL;
 
-int question6_executer(char *line)
-{
-	/* Question 6: Insert your code to execute the command line
-	 * identically to the standard execution scheme:
-	 * parsecmd, then fork+execvp, for a single command.
-	 * pipe and i/o redirection are not required.
-	 */
-	printf("Not implemented yet: can not execute %s\n", line);
-
-	/* Remove this line when using parsecmd as it will free it */
-	free(line);
-
-	return 0;
-}
-
-SCM executer_wrapper(SCM x)
-{
-        return scm_from_int(question6_executer(scm_to_locale_stringn(x, 0)));
-}
-#endif
-
 
 void terminate(char *line) {
 #if USE_GNU_READLINE == 1
@@ -193,6 +172,32 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 		}
 	}
 }
+
+int question6_executer(char *line)
+{
+	/* Question 6: Insert your code to execute the command line
+	 * identically to the standard execution scheme:
+	 * parsecmd, then fork+execvp, for a single command.
+	 * pipe and i/o redirection are not required.
+	 */
+
+	 int pipeInput[2] = {-1, -1};
+	 int pipeOutput[2] = {-1, -1};
+
+	 // Pas de processus en background
+	 runcmd(parsecmd( & line)->seq[0], 0, NULL, NULL, pipeOutput, pipeInput);
+
+	/* Remove this line when using parsecmd as it will free it */
+	free(line);
+
+	return 0;
+}
+
+SCM executer_wrapper(SCM x)
+{
+        return scm_from_int(question6_executer(scm_to_locale_stringn(x, 0)));
+}
+#endif
 
 
 int main() {
