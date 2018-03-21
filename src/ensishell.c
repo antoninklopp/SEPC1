@@ -59,11 +59,16 @@ void displayJobs(char **cmd){
 	struct JOB *tmpJob = firstJob;
 	int i = 0;
 	while (tmpJob != NULL){
-		printf("[%i]        ", i+1);
-		if (tmpJob->pid == waitpid(tmpJob->pid, &child_status, WNOHANG)){
+		pid_t state = waitpid(tmpJob->pid, &child_status, WNOHANG);
+		if (state > 0){
+			printf("[%i]        ", i+1);
 			printf("[Stopped]       ");
-		} else {
+		} else if (state == 0){
+			printf("[%i]        ", i+1);
 			printf("[Processing]         ");
+		} else {
+			tmpJob = tmpJob->suivant;
+			continue;
 		}
 		for (int j = 0; tmpJob->name[j] != 0; j++){
 			printf("%s ", tmpJob->name[j]);
