@@ -96,6 +96,18 @@ void displayJobs(char **cmd){
 }
 
 /*
+On free les jobs.
+*/
+void freeJobs(){
+	struct JOB *tmpJob = firstJob;
+	while(tmpJob != NULL){
+		tmpJob = firstJob->suivant;
+		free(firstJob->name);
+		free(firstJob);
+	}
+}
+
+/*
 Appel d'une commande
 
 @numPipe: 0 ou 1 selon que la commmanbde soit appelée en premier ou en 2
@@ -164,17 +176,14 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 				// On est sur le premier job
 				if (currentJob == NULL){
 					currentJob = malloc(sizeof(struct JOB));
-					//currentJob = (struct JOB){.name = copyParam, .pid = f, .status = 0, .suivant=NULL};
-					currentJob->name = copyParam;
-					currentJob->pid = f;
+					currentJob->name = copyParam; currentJob->pid = f;
 					currentJob->suivant=NULL;
 					firstJob = currentJob;
 				}
 				// Si on est sur un suivant.
 				else {
 					struct JOB *nouveauJob = malloc(sizeof(struct JOB));
-					nouveauJob->name = copyParam;
-					nouveauJob->pid = f;
+					nouveauJob->name = copyParam; nouveauJob->pid = f;
 					nouveauJob->suivant=NULL;
 					currentJob->suivant = nouveauJob;
 					currentJob = nouveauJob;
@@ -293,14 +302,7 @@ int main() {
 			close(pipeOutput[1]);
 			close(pipeInput[0]);
 		}
-
-		//if (tailleCommandes != 1){
-		//	dup2(1, pipeInOut[0]);
-		// }
-
-		// On close le pipe
-		// close(pipeInOut[0]);
-		// close(pipeInOut[1]);
 	}
+	freeJobs();
 	return EXIT_SUCCESS;
 }
