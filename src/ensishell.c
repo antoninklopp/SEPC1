@@ -57,14 +57,14 @@ void terminate(char *line) {
 void displayJobs(char **cmd){
 	int child_status;
 	struct JOB *tmpJob = firstJob;
-	int i = 0;
+	int i = 1;
 	while (tmpJob != NULL){
 		pid_t state = waitpid(tmpJob->pid, &child_status, WNOHANG);
 		if (state > 0){
-			printf("[%i]        ", i+1);
+			printf("[%i]        ", i);
 			printf("[Stopped]       ");
 		} else if (state == 0){
-			printf("[%i]        ", i+1);
+			printf("[%i]        ", i);
 			printf("[Processing]         ");
 		} else {
 			tmpJob = tmpJob->suivant;
@@ -108,7 +108,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 		pid_t f = fork();
 
 		if (f == -1){
-			fprintf(stderr, "Erreur dans le fork");
+			perror("Erreur dans le fork");
 			exit(1);
 		} else if (f == 0){ // Nouveau processus
 			int inputFile = -1;
@@ -151,12 +151,15 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 			} else {
 				// Ajouter le job à la liste des processus
 				int lengthCmd = 0;
-				lengthCmd++;
+				while(cmd[lengthCmd] != NULL){
+					lengthCmd++;
+				}
 				char **copyParam = malloc(lengthCmd*sizeof(char*) + 1);
 				for (int i=0; i < lengthCmd; i++){
-					copyParam[i] = malloc(sizeof(cmd[i]) + 1);
-					memcpy(copyParam[i], cmd[i], sizeof(cmd[i])/sizeof(char) + 1);
+					copyParam[i] = malloc(sizeof(cmd[i]));
+					memcpy(copyParam[i], cmd[i], sizeof(cmd[i])/sizeof(char));
 				}
+				copyParam[lengthCmd] = '\0';
 				// On est sur le premier job
 				if (currentJob == NULL){
 					currentJob = malloc(sizeof(struct JOB));
@@ -186,11 +189,11 @@ int question6_executer(char *line)
 	 * pipe and i/o redirection are not required.
 	 */
 
-	 int pipeInput[2] = {-1, -1};
-	 int pipeOutput[2] = {-1, -1};
+	//  int pipeInput[2] = {-1, -1};
+	//  int pipeOutput[2] = {-1, -1};
 
 	 // Pas de processus en background
-	 runcmd(parsecmd( & line)->seq[0], 0, NULL, NULL, pipeOutput, pipeInput);
+	 // runcmd(parsecmd( & line)->seq[0], 0, NULL, NULL, pipeOutput, pipeInput);
 
 	/* Remove this line when using parsecmd as it will free it */
 	free(line);
