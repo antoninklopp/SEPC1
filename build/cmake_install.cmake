@@ -1,4 +1,4 @@
-# Install script for directory: /user/9/.base/pionn/home/SEPC/tp_shell/SEPC1
+# Install script for directory: /user/2/klopptoa/Documents/2A/SEPC/SEPC1
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -38,7 +38,7 @@ ELSE(CMAKE_INSTALL_COMPONENT)
   SET(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 ENDIF(CMAKE_INSTALL_COMPONENT)
 
-FILE(WRITE "/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/build/${CMAKE_INSTALL_MANIFEST}" "")
+FILE(WRITE "/user/2/klopptoa/Documents/2A/SEPC/SEPC1/build/${CMAKE_INSTALL_MANIFEST}" "")
 FOREACH(file ${CMAKE_INSTALL_MANIFEST_FILES})
-  FILE(APPEND "/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
+  FILE(APPEND "/user/2/klopptoa/Documents/2A/SEPC/SEPC1/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
 ENDFOREACH(file)

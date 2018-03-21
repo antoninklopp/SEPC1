@@ -42,10 +42,10 @@ EQUALS = =
 CMAKE_EDIT_COMMAND = /usr/bin/ccmake
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /user/9/.base/pionn/home/SEPC/tp_shell/SEPC1
+CMAKE_SOURCE_DIR = /user/2/klopptoa/Documents/2A/SEPC/SEPC1
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/build
+CMAKE_BINARY_DIR = /user/2/klopptoa/Documents/2A/SEPC/SEPC1/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -73,7 +73,7 @@ package/fast: package
 # Special rule for the target package_source
 package_source:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool for source..."
-	/usr/bin/cpack --config ./CPackSourceConfig.cmake /user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/build/CPackSourceConfig.cmake
+	/usr/bin/cpack --config ./CPackSourceConfig.cmake /user/2/klopptoa/Documents/2A/SEPC/SEPC1/build/CPackSourceConfig.cmake
 .PHONY : package_source
 
 # Special rule for the target package_source
@@ -102,9 +102,9 @@ test/fast: test
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/build/CMakeFiles /user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /user/2/klopptoa/Documents/2A/SEPC/SEPC1/build/CMakeFiles /user/2/klopptoa/Documents/2A/SEPC/SEPC1/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /user/2/klopptoa/Documents/2A/SEPC/SEPC1/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target

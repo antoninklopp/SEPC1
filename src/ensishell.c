@@ -35,11 +35,12 @@
 struct JOB {
 	char** name;
 	pid_t pid;
-	int status;
+	struct JOB *suivant;
 };
 
 static int nombreJobs = 0;
-static struct JOB* allJobs;
+static struct JOB* firstJob = NULL;
+static struct JOB* currentJob = NULL;
 
 int question6_executer(char *line)
 {
@@ -74,6 +75,26 @@ void terminate(char *line) {
 	exit(0);
 }
 
+void displayJobs(char **cmd){
+	int child_status;
+	struct JOB *tmpJob = firstJob;
+	int i = 0;
+	while (tmpJob != NULL){
+		printf("[%i]        ", i+1);
+		if (tmpJob->pid == waitpid(tmpJob->pid, &child_status, WNOHANG)){
+			printf("[Stopped]       ");
+		} else {
+			printf("[Processing]         ");
+		}
+		for (int j = 0; tmpJob->name[j] != 0; j++){
+			printf("%s ", tmpJob->name[j]);
+		}
+		printf("\n");
+		i++;
+		tmpJob = tmpJob->suivant;
+	}
+}
+
 /*
 Appel d'une commande
 
@@ -86,18 +107,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 
 	if (strcmp(cmdExec, job) == 0){
 		// Appel de la commande jobs.
-		for (int i = 0; i < nombreJobs; i++) {
-			printf("[%i]        ", i+1);
-			if (allJobs[i].status == 1){
-				printf("[Stopped]       ");
-			} else {
-				printf("[Processing]         ");
-			}
-			for (int j = 0; allJobs[i].name[j] != 0; j++){
-				printf("%s ", allJobs[i].name[j]);
-			}
-			printf("\n");
-		}
+		displayJobs(cmd);
 	} else {
 		pid_t f = fork();
 
@@ -139,29 +149,37 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 			}
 
 			exit(0);
-		} else { // Processus parent attend la fin du premier processus.*
-			if (nombreJobs < 15){
+		} else { // Processus parent attend la fin du premier processus.
+			if (background == 0){
+				wait(&child_status);
+			} else {
+				// Ajouter le job à la liste des processus
 				int lengthCmd = 0;
-				while(cmd[lengthCmd] != NULL){
-					lengthCmd++;
-				}
+				lengthCmd++;
 				char **copyParam = malloc(lengthCmd*sizeof(char*) + 1);
 				for (int i=0; i < lengthCmd; i++){
 					copyParam[i] = malloc(sizeof(cmd[i]) + 1);
 					memcpy(copyParam[i], cmd[i], sizeof(cmd[i])/sizeof(char) + 1);
 				}
-				allJobs[nombreJobs] = (struct JOB){.name = copyParam, .pid = f, .status = 0};
-				nombreJobs ++;
-			}
-
-			if (background == 0){
-				int currentProcess = nombreJobs - 1;
-				// On attend que le job soit fini pour mettre son status à 1.
-				waitpid(allJobs[nombreJobs-1].pid, &child_status, 0);
-				while (!WIFEXITED(child_status) && !WIFSIGNALED(child_status)){
-					waitpid(allJobs[nombreJobs-1].pid, &child_status, 0);
+				// On est sur le premier job
+				if (currentJob == NULL){
+					currentJob = malloc(sizeof(struct JOB));
+					//currentJob = (struct JOB){.name = copyParam, .pid = f, .status = 0, .suivant=NULL};
+					currentJob->name = copyParam;
+					currentJob->pid = f;
+					currentJob->suivant=NULL;
+					firstJob = currentJob;
 				}
-				allJobs[currentProcess].status = 1;
+				// Si on est sur un suivant.
+				else {
+					struct JOB *nouveauJob = malloc(sizeof(struct JOB));
+					nouveauJob->name = copyParam;
+					nouveauJob->pid = f;
+					nouveauJob->suivant=NULL;
+					currentJob->suivant = nouveauJob;
+					currentJob = nouveauJob;
+				}
+				nombreJobs ++;
 			}
 		}
 	}
@@ -176,8 +194,6 @@ int main() {
         /* register "executer" function in scheme */
         scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
-
-	allJobs = malloc(16 * sizeof(struct JOB));
 
 	while (1) {
 		struct cmdline *l;
@@ -278,13 +294,13 @@ int main() {
 			close(pipeInput[0]);
 		}
 
-		if (tailleCommandes != 1){
-			dup2(1, pipeInOut[0]);
-		}
+		//if (tailleCommandes != 1){
+		//	dup2(1, pipeInOut[0]);
+		// }
 
 		// On close le pipe
-		close(pipeInOut[0]);
-		close(pipeInOut[1]);
+		// close(pipeInOut[0]);
+		// close(pipeInOut[1]);
 	}
 	return EXIT_SUCCESS;
 }

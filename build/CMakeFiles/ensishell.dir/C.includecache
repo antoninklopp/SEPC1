@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/src/ensishell.c
+/user/2/klopptoa/Documents/2A/SEPC/SEPC1/src/ensishell.c
 stdio.h
 -
 stdlib.h
@@ -24,19 +24,19 @@ fcntl.h
 unistd.h
 -
 variante.h
-/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/src/variante.h
+/user/2/klopptoa/Documents/2A/SEPC/SEPC1/src/variante.h
 readcmd.h
-/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/src/readcmd.h
+/user/2/klopptoa/Documents/2A/SEPC/SEPC1/src/readcmd.h
 libguile.h
 -
 
-/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/src/readcmd.h
+/user/2/klopptoa/Documents/2A/SEPC/SEPC1/src/readcmd.h
 variante.h
-/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/src/variante.h
+/user/2/klopptoa/Documents/2A/SEPC/SEPC1/src/variante.h
 readline/readline.h
 -
 readline/history.h
 -
 
-/user/9/.base/pionn/home/SEPC/tp_shell/SEPC1/src/variante.h
+/user/2/klopptoa/Documents/2A/SEPC/SEPC1/src/variante.h
 
