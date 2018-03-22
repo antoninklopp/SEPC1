@@ -209,14 +209,14 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					struct JOB *nouveauJob = malloc(sizeof(struct JOB));
 					nouveauJob->name = copyParam; nouveauJob->pid = f;
 					nouveauJob->suivant=NULL;
-					currentJob->status = 0;
-					currentJob->suivant = nouveauJob;
+					nouveauJob->status = 0;
 					gettimeofday (&(nouveauJob->t_beginning), NULL);
+					currentJob->suivant = nouveauJob;
 					currentJob = nouveauJob;
 				}
 
 				// On affiche le processus lancé en arrière plan
-				printf("[%i]       %i\n", nombreJobs, f);
+				printf("[%i]       %i\n", nombreJobs + 1, f);
 
 				nombreJobs ++;
 
