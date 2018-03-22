@@ -36,6 +36,7 @@ struct JOB {
 	char** name;
 	pid_t pid;
 	struct JOB *suivant;
+	int status;
 	struct timeval t_beginning;
 };
 
@@ -56,14 +57,16 @@ void terminate(char *line) {
 }
 
 void displayJobs(char **cmd){
-	int child_status;
+	// int child_status;
 	struct JOB *tmpJob = firstJob;
 	int i = 1;
 	while (tmpJob != NULL){
-		pid_t state = waitpid(tmpJob->pid, &child_status, WNOHANG);
+		// pid_t state = waitpid(tmpJob->pid, &child_status, WNOHANG);
+		int state = tmpJob->status;
 		if (state > 0){
 			printf("[%i]        ", i);
 			printf("[Stopped]       ");
+			tmpJob->status = -1;  // On indique qu'il est fini.
 		} else if (state == 0){
 			printf("[%i]        ", i);
 			printf("[Processing]         ");
@@ -114,6 +117,8 @@ void signalHandler(int _signal){
 	}
 
 	gettimeofday (&temps_apres, NULL);
+
+	tmpJob->status = 1;
 
 	printf("\nLe processus %s s'est terminé en : %lli micro secondes\n", tmpJob->name[0],
 		(temps_apres.tv_sec-tmpJob->t_beginning.tv_sec)*1000000LL + temps_apres.tv_usec-tmpJob->t_beginning.tv_usec);
@@ -175,6 +180,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 			exit(0);
 		} else { // Processus parent attend la fin du premier processus.
 			if (background == 0){
+				// On attend
 				wait(&child_status);
 			} else {
 				// Ajouter le job à la liste des processus
@@ -193,6 +199,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					currentJob = malloc(sizeof(struct JOB));
 					currentJob->name = copyParam; currentJob->pid = f;
 					currentJob->suivant=NULL;
+					currentJob->status = 0;
 					gettimeofday (&(currentJob->t_beginning), NULL);
 					firstJob = currentJob;
 				}
@@ -201,6 +208,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					struct JOB *nouveauJob = malloc(sizeof(struct JOB));
 					nouveauJob->name = copyParam; nouveauJob->pid = f;
 					nouveauJob->suivant=NULL;
+					currentJob->status = 0;
 					currentJob->suivant = nouveauJob;
 					gettimeofday (&(nouveauJob->t_beginning), NULL);
 					currentJob = nouveauJob;
