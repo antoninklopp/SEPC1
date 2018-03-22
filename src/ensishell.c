@@ -36,6 +36,7 @@ struct JOB {
 	char** name;
 	pid_t pid;
 	struct JOB *suivant;
+	struct timeval t_beginning;
 };
 
 static int nombreJobs = 0;
@@ -91,8 +92,27 @@ void freeJobs(){
 	}
 }
 
-void signalHandler(int signal){
-	done = 1;
+void signalHandler(int _signal){
+	pid_t p;
+    int status;
+	// Declaration des variables de temps.
+	struct timeval temps_apres;
+
+	struct JOB * tmpJob = firstJob;
+
+	while (1){
+	    if ((p=waitpid(-1, &status, WNOHANG)) > 0)
+	    {
+			while ((int)(tmpJob->pid) != (int)p || tmpJob != NULL){
+				tmpJob = tmpJob->suivant;
+			}
+		   	break;
+	    }
+	}
+
+	gettimeofday (&temps_apres, NULL);
+
+	printf("Le processus s'est terminé en : %lli micro secondes\n", (temps_apres.tv_sec-tmpJob->t_beginning.tv_sec)*1000000LL + temps_apres.tv_usec-tmpJob->t_beginning.tv_usec);
 }
 
 /*
@@ -169,6 +189,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					currentJob = malloc(sizeof(struct JOB));
 					currentJob->name = copyParam; currentJob->pid = f;
 					currentJob->suivant=NULL;
+					gettimeofday (&currentJob->t_beginning, NULL);
 					firstJob = currentJob;
 				}
 				// Si on est sur un suivant.
@@ -177,23 +198,18 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					nouveauJob->name = copyParam; nouveauJob->pid = f;
 					nouveauJob->suivant=NULL;
 					currentJob->suivant = nouveauJob;
+					gettimeofday (&currentJob->t_beginning, NULL);
 					currentJob = nouveauJob;
 				}
 				nombreJobs ++;
 
-				// Declaration des variables de temps.
-				struct timeval temps_avant, temps_apres;
-
-			    gettimeofday (&temps_avant, NULL);
-
 				// Ajout du point 7.3.
-				pid_t state = waitpid(tmpJob->pid, &child_status, WNOHANG);
 				struct sigaction prepaSignal;
 
-				prepaSignal.sa_handler = signalHandler;
-				sigaction(SIGTERM, &prepaSignal, NULL); 
+				memset(&prepaSignal, 0, sizeof(prepaSignal));
 
-			    gettimeofday (&temps_apres, NULL);
+				prepaSignal.sa_handler = signalHandler;
+				sigaction(SIGCHLD, &prepaSignal, NULL);
 
 			}
 		}
