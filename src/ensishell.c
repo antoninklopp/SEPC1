@@ -207,7 +207,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 				}
 
 				// On affiche le processus lancé en arrière plan
-				printf("[%i]       %i", nombreJobs, f); 
+				printf("[%i]       %i\n", nombreJobs, f);
 
 				nombreJobs ++;
 
