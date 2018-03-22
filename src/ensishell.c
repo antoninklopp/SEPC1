@@ -113,7 +113,9 @@ void signalHandler(int _signal){
 				tmpJob = tmpJob->suivant;
 			}
 			break;
-	    }
+	    } else {
+			return;
+		}
 	}
 
 	gettimeofday (&temps_apres, NULL);
@@ -132,7 +134,7 @@ Appel d'une commande
 void runcmd(char **cmd, int background, char* input, char* output, int pipeOutput[2], int pipeInput[2]){
 	char *cmdExec = cmd[0];
 	char *job = "jobs";
-	int child_status;
+	// int child_status;
 
 	if (strcmp(cmdExec, job) == 0){
 		// Appel de la commande jobs.
@@ -180,8 +182,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 			exit(0);
 		} else { // Processus parent attend la fin du premier processus.
 			if (background == 0){
-				// On attend
-				wait(&child_status);
+
 			} else {
 				// Ajouter le job à la liste des processus
 				int lengthCmd = 0;
@@ -243,8 +244,12 @@ int question6_executer(char *line)
 	 int pipeInput[2] = {-1, -1};
 	 int pipeOutput[2] = {-1, -1};
 
+	 int status; 
+
 	 // Pas de processus en background
 	 runcmd(parsecmd( & line)->seq[0], 0, NULL, NULL, pipeOutput, pipeInput);
+
+	 waitpid(-1, &status, 0);
 
 	/* Remove this line when using parsecmd as it will free it */
 	free(line);
@@ -346,7 +351,13 @@ int main() {
 			nbInstructions++;
 		}
 
+		int compteur_en_cours = 0;
+
 		for (i=0; i < nbInstructions; i++){
+			// runcmd gere seule le background
+			if (!background){
+				compteur_en_cours ++;
+			}
 			pipeInput[0] = pipeOutput[0];
 			pipeInput[1] = pipeOutput[1];
 			if(i != nbInstructions-1){
@@ -365,6 +376,12 @@ int main() {
 			// so the next 2 line work regardless of pipe initialization
 			close(pipeOutput[1]);
 			close(pipeInput[0]);
+		}
+
+		int status;
+		while (compteur_en_cours != 0){
+			waitpid(-1, &status, 0);
+			compteur_en_cours --;
 		}
 	}
 	freeJobs();
