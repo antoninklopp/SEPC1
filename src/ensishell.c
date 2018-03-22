@@ -92,27 +92,31 @@ void freeJobs(){
 	}
 }
 
+/*
+signal question 7.3
+*/
 void signalHandler(int _signal){
 	pid_t p;
-    int status;
+    // int status;
 	// Declaration des variables de temps.
 	struct timeval temps_apres;
 
 	struct JOB * tmpJob = firstJob;
 
 	while (1){
-	    if ((p=waitpid(-1, &status, WNOHANG)) > 0)
+	    if ((p=waitpid(-1, NULL, WNOHANG)) > 0)
 	    {
-			while ((int)(tmpJob->pid) != (int)p || tmpJob != NULL){
+			while (((int)(tmpJob->pid) != (int)p) && (tmpJob != NULL)){
 				tmpJob = tmpJob->suivant;
 			}
-		   	break;
+			break;
 	    }
 	}
 
 	gettimeofday (&temps_apres, NULL);
 
-	printf("Le processus s'est terminé en : %lli micro secondes\n", (temps_apres.tv_sec-tmpJob->t_beginning.tv_sec)*1000000LL + temps_apres.tv_usec-tmpJob->t_beginning.tv_usec);
+	printf("\nLe processus %s s'est terminé en : %lli micro secondes\n", tmpJob->name[0],
+		(temps_apres.tv_sec-tmpJob->t_beginning.tv_sec)*1000000LL + temps_apres.tv_usec-tmpJob->t_beginning.tv_usec);
 }
 
 /*
@@ -189,7 +193,7 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					currentJob = malloc(sizeof(struct JOB));
 					currentJob->name = copyParam; currentJob->pid = f;
 					currentJob->suivant=NULL;
-					gettimeofday (&currentJob->t_beginning, NULL);
+					gettimeofday (&(currentJob->t_beginning), NULL);
 					firstJob = currentJob;
 				}
 				// Si on est sur un suivant.
@@ -198,9 +202,13 @@ void runcmd(char **cmd, int background, char* input, char* output, int pipeOutpu
 					nouveauJob->name = copyParam; nouveauJob->pid = f;
 					nouveauJob->suivant=NULL;
 					currentJob->suivant = nouveauJob;
-					gettimeofday (&currentJob->t_beginning, NULL);
+					gettimeofday (&(nouveauJob->t_beginning), NULL);
 					currentJob = nouveauJob;
 				}
+
+				// On affiche le processus lancé en arrière plan
+				printf("[%i]       %i", nombreJobs, f); 
+
 				nombreJobs ++;
 
 				// Ajout du point 7.3.
@@ -224,11 +232,11 @@ int question6_executer(char *line)
 	 * pipe and i/o redirection are not required.
 	 */
 
-	//  int pipeInput[2] = {-1, -1};
-	//  int pipeOutput[2] = {-1, -1};
+	 int pipeInput[2] = {-1, -1};
+	 int pipeOutput[2] = {-1, -1};
 
 	 // Pas de processus en background
-	 // runcmd(parsecmd( & line)->seq[0], 0, NULL, NULL, pipeOutput, pipeInput);
+	 runcmd(parsecmd( & line)->seq[0], 0, NULL, NULL, pipeOutput, pipeInput);
 
 	/* Remove this line when using parsecmd as it will free it */
 	free(line);
