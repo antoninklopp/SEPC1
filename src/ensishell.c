@@ -244,7 +244,7 @@ int question6_executer(char *line)
 	 int pipeInput[2] = {-1, -1};
 	 int pipeOutput[2] = {-1, -1};
 
-	 int status; 
+	 int status;
 
 	 // Pas de processus en background
 	 runcmd(parsecmd( & line)->seq[0], 0, NULL, NULL, pipeOutput, pipeInput);
