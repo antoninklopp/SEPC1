@@ -61,7 +61,6 @@ void displayJobs(char **cmd){
 	struct JOB *tmpJob = firstJob;
 	int i = 1;
 	while (tmpJob != NULL){
-		// pid_t state = waitpid(tmpJob->pid, &child_status, WNOHANG);
 		int state = tmpJob->status;
 		if (state > 0){
 			printf("[%i]        ", i);
@@ -128,8 +127,6 @@ void signalHandler(int _signal){
 
 /*
 Appel d'une commande
-
-@numPipe: 0 ou 1 selon que la commmanbde soit appelée en premier ou en 2
 */
 void runcmd(char **cmd, int background, char* input, char* output, int pipeOutput[2], int pipeInput[2]){
 	char *cmdExec = cmd[0];
@@ -354,7 +351,7 @@ int main() {
 		int compteur_en_cours = 0;
 
 		for (i=0; i < nbInstructions; i++){
-			// runcmd gere seule le background
+			// runcmd gere seule l'attente en background
 			if (!background){
 				compteur_en_cours ++;
 			}
@@ -372,8 +369,7 @@ int main() {
 			}
 			char **cmd = l->seq[i];
 			runcmd(cmd, background, l->in, l->out, pipeOutput, pipeInput);
-			//there seems to be no issue closing non existing pipes
-			// so the next 2 line work regardless of pipe initialization
+
 			close(pipeOutput[1]);
 			close(pipeInput[0]);
 		}
